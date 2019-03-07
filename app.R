@@ -7,18 +7,22 @@
 #    http://shiny.rstudio.com/
 #
 
+#--Load libraries to enable interactivity and to load the spss data file (.sav)
 library(shiny)
 library(haven)
 
+#--Load ANES 2018 Data
+#---Because this statement is outside the UI and Server functions, 
+#---it is performed only once, saving resources on refreshes
 Interest_2018.df <- read_spss('./Interest_2018_3.sav')
 
-# Define UI for application that draws a histogram
+# Define UI for application that draws Box Plots
 ui <- fluidPage(
    
    # Application title
    titlePanel("2018 ANES Attribute Distributions by Religion"),
    
-   # Sidebar with a slider input for number of bins 
+   # Sidebar with a dropdown menu input for variable to compare
    sidebarLayout(
       sidebarPanel(
         selectInput("ychoice",
@@ -27,29 +31,28 @@ ui <- fluidPage(
                     selected = "Political Ideology")
       ),
       
-      # Show a plot of the generated distribution
+      # Show a multiple box plot of the generated distributions
       mainPanel(
          plotOutput("distPlot")
       )
    )
 )
 
-# Define server logic required to draw a histogram
+# Define server logic required to draw a multiple box plot
 server <- function(input, output) {
    
    output$distPlot <- renderPlot({
-     # generate bins based on input$bins from ui.R
+     # input which column was chosen by the user
      column <- input$ychoice
-     #print(column)
-     #summary(Interest_2018.df[,c(1:3)])
      
+      #--Generate Y axis label, changes with variable choice
      ylabtext <- ifelse(grepl("Favorability",column),
                         paste0(column,': Low - High'),
                         ifelse(grepl("Ideology",column),
                                'Ideology: 1 Very Liberal, 7 Very Conservative',
                         'Birth Year'))
      
-     ## draw the histogram with the specified number of bins
+     ## draw multiple box plot with the specified column
      boxplot(unlist(unclass(Interest_2018.df[,column]))~
                unclass(Interest_2018.df$Religion),
              xlab = '',
